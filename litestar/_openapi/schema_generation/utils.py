@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Mapping, _GenericAlias  # type: ignore[attr-defined]
 
@@ -17,6 +18,8 @@ __all__ = (
     "_should_create_literal_schema",
     "_get_normalized_schema_key",
 )
+
+INVALID_KEY_CHARACTER_PATTERN = re.compile(r"[^a-zA-Z0-9._-]+")
 
 
 def _type_or_first_not_none_inner_type(field_definition: FieldDefinition) -> Any:
@@ -97,7 +100,7 @@ def _get_normalized_schema_key(annotation: Any) -> tuple[str, ...]:
     module = getattr(annotation, "__module__", "")
     name = str(annotation)[len(module) + 1 :] if isinstance(annotation, _GenericAlias) else annotation.__qualname__
     name = name.replace(".<locals>.", ".")
-    return *module.split("."), name
+    return *module.split("."), re.sub(INVALID_KEY_CHARACTER_PATTERN, "_", name)
 
 
 def get_formatted_examples(field_definition: FieldDefinition, examples: Sequence[Example]) -> Mapping[str, Example]:
